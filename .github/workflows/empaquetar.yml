@@ -1,0 +1,81 @@
+name: Empaquetar comprova_desplegaments
+
+on: [push]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instal·lar pyinstaller
+        run: pip install pyinstaller
+      - name: Empaquetar
+        run: pyinstaller --onefile comprova_desplegaments.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: comprova_desplegaments-linux
+          path: dist/comprova_desplegaments
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instal·lar pyinstaller
+        run: pip install pyinstaller
+      - name: Empaquetar
+        run: pyinstaller --onefile comprova_desplegaments.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: comprova_desplegaments-macos
+          path: dist/comprova_desplegaments
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instal·lar pyinstaller
+        run: pip install pyinstaller
+      - name: Empaquetar
+        run: pyinstaller --onefile comprova_desplegaments.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: comprova_desplegaments-windows
+          path: dist/comprova_desplegaments.exe
+
+  prova-executable:
+    needs: [build-linux, build-macos, build-windows]
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artefacte: comprova_desplegaments-linux
+            executable: ./comprova_desplegaments
+          - os: macos-latest
+            artefacte: comprova_desplegaments-macos
+            executable: ./comprova_desplegaments
+          - os: windows-latest
+            artefacte: comprova_desplegaments-windows
+            executable: ./comprova_desplegaments.exe
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.artefacte }}
+      - name: Donar permisos d'execució
+        if: runner.os != 'Windows'
+        run: chmod +x comprova_desplegaments
+      - name: Executar l'empaquetat
+        shell: bash
+        run: ${{ matrix.executable }} danicasasyuste.github.io github.com --eixida informe.csv
+      - name: Mostrar l'informe
+        shell: bash
+        run: cat informe.csv
